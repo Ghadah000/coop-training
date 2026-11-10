@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تسجيل الدخول - منصة التدريب التعاوني</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="auth"><div class="card">
+  <h1 style="margin-top:0">🎓 منصة التدريب التعاوني</h1>
+  <div class="row" style="margin-bottom:8px">
+    <button id="tl">تسجيل الدخول</button><button id="tr" class="s">حساب جديد</button>
+  </div>
+  <form id="f">
+    <div id="reg" hidden>
+      <input id="name" placeholder="الاسم الكامل / اسم الجهة">
+      <select id="role">
+        <option value="student">طالب</option><option value="supervisor">مشرف أكاديمي</option><option value="company">جهة تدريب</option>
+      </select>
+      <select id="sup"></select>
+    </div>
+    <input id="email" type="email" placeholder="البريد الإلكتروني" required>
+    <input id="pw" type="password" placeholder="كلمة المرور" required>
+    <div class="err" id="err"></div>
+    <button style="width:100%" id="go">دخول</button>
+  </form>
+</div></div>
+<script>
+let mode="login";const $=s=>document.getElementById(s);
+if(localStorage.token)location.href="app.html";
+function setMode(m){mode=m;$("reg").hidden=m!=="register";$("go").textContent=m==="login"?"دخول":"إنشاء الحساب";
+  $("tl").className=m==="login"?"":"s";$("tr").className=m==="register"?"":"s";if(m==="register")role()}
+function role(){$("sup").hidden=$("role").value!=="student"}
+$("tl").onclick=()=>setMode("login");$("tr").onclick=()=>setMode("register");$("role").onchange=role;
+fetch("/api/supervisors").then(r=>r.json()).then(l=>{
+  $("sup").innerHTML='<option value="">اختر المشرف الأكاديمي</option>'+l.map(s=>`<option value="${s.id}">${s.name.replace(/[<>&"]/g,"")}</option>`).join("")});
+$("f").onsubmit=async e=>{e.preventDefault();$("err").textContent="";
+  const body={email:$("email").value,password:$("pw").value};
+  if(mode==="register"){body.name=$("name").value;body.role=$("role").value;body.supervisorId=$("sup").value}
+  try{const r=await fetch("/api/"+mode,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    localStorage.token=d.token;location.href="app.html"}catch(x){$("err").textContent=x.message||"حدث خطأ"}};
+</script></body></html>
